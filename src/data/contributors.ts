@@ -85,6 +85,10 @@ export const contributors: Contributor[] = [
     url: "https://github.com/zhu1h1t1",
   },
   {
+    name: "CmzYa",
+    role: "适人握持",
+    avatar: "https://mc-heads.net/avatar/CmzYa/64",
+    url: "https://github.com/CmzYa",
     name: "ieshishinjin",
     role: "新增了功能，并吃了明太鱼干",
     avatar: "https://minotar.net/avatar/ieshishinjin/64",
@@ -101,6 +105,12 @@ export const contributors: Contributor[] = [
     role: "找到软件图形化错误",
     avatar: "https://minotar.net/helm/f04be4dcd0ca49af89faf61068ec34e2/64",
     url: "https://github.com/maobuben",
+  },
+  {
+    name: "xingwangzhe",
+    role: "贡献者",
+    avatar: "https://mc-heads.net/avatar/xingwangzhe_/64",
+    url: "https://github.com/xingwangzhe",
   },
   // ============================================
   // 在这里添加更多贡献者！

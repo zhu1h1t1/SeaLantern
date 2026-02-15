@@ -1,3 +1,1 @@
-// Utility modules - add yours here
-
-pub mod downloader;
+pub mod cli;
