@@ -85,6 +85,12 @@ export const contributors: Contributor[] = [
     url: "https://github.com/zhu1h1t1",
   },
   {
+    name: "ieshishinjin",
+    role: "新增了功能，并吃了明太鱼干",
+    avatar: "https://minotar.net/avatar/ieshishinjin/64",
+    url: "https://github.com/ieshishinjin",
+  },
+  {
     name: "欧耶熊猫人",
     role: "Github文档转英文",
     avatar: "https://mc-heads.net/avatar/Pandaman_AF/64",
