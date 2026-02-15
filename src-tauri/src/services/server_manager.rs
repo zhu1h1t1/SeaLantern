@@ -495,9 +495,7 @@ impl ServerManager {
                             Err(format!("preload.bat 执行失败: {}", error))
                         }
                     }
-                    Err(e) => {
-                        Err(e.to_string())
-                    }
+                    Err(e) => Err(e.to_string()),
                 }
             } else {
                 Ok("未找到脚本".to_string())
@@ -533,9 +531,7 @@ impl ServerManager {
                             Err(format!("preload.sh 执行失败: {}", error))
                         }
                     }
-                    Err(e) => {
-                        Err(e.to_string())
-                    }
+                    Err(e) => Err(e.to_string()),
                 }
             } else {
                 Ok("未找到脚本".to_string())
