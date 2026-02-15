@@ -1,7 +1,7 @@
+use crate::services::global;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use crate::services::global;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServerAddress {
@@ -17,9 +17,7 @@ pub struct JoinManager {
 
 impl JoinManager {
     pub fn new() -> Self {
-        JoinManager {
-            id_map: Mutex::new(HashMap::new()),
-        }
+        JoinManager { id_map: Mutex::new(HashMap::new()) }
     }
 
     /// 通过 ID 获取服务器地址
