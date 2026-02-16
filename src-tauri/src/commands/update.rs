@@ -433,7 +433,7 @@ pub async fn open_download_url(url: String) -> Result<(), String> {
 }
 
 fn get_update_cache_dir() -> PathBuf {
-    let cache_dir = dirs_next::cache_dir().unwrap_or_else(|| std::env::temp_dir());
+    let cache_dir = dirs_next::cache_dir().unwrap_or_else(std::env::temp_dir);
     cache_dir.join("com.fpsz.sea-lantern").join("updates")
 }
 
@@ -558,10 +558,7 @@ fn spawn_elevated_windows_process(
         return Err(if stderr.is_empty() {
             "Administrator permission was denied or installer failed to launch".to_string()
         } else {
-            format!(
-                "Administrator permission was denied or installer failed to launch: {}",
-                stderr
-            )
+            format!("Administrator permission was denied or installer failed to launch: {}", stderr)
         });
     }
 
