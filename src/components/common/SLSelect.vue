@@ -156,16 +156,24 @@ const handleClickOutside = (e: MouseEvent) => {
   }
 };
 
+const handleScroll = () => {
+  if (isOpen.value) {
+    isOpen.value = false;
+  }
+};
+
 const stopWatch = watch(searchQuery, () => {
   highlightedIndex.value = filteredOptions.value.length > 0 ? 0 : -1;
 });
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  window.addEventListener("scroll", handleScroll, true);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("scroll", handleScroll, true);
   stopWatch();
 
   containerRef.value = null;
