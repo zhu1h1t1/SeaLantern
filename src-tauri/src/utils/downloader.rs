@@ -85,6 +85,9 @@ impl MultiThreadDownloader {
         output_path: &str,
         thread_count: usize,
     ) -> Result<Arc<DownloadStatus>, String> {
+        if thread_count == 0 {
+            return Err("Thread count must be positive".to_string());
+        }
         let res = self
             .client
             .head(url)

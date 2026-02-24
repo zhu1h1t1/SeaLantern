@@ -74,6 +74,22 @@ const statusLabel = computed(() => {
 async function handleDownload() {
   if (combinedLoading.value) return;
 
+  const threadCountValue = threadCount.value;
+  if (threadCountValue == "") {
+    showError("线程数不能为空");
+    return;
+  }
+  if (!/^-?\d+$/.test(threadCountValue)) {
+    showError("字符不合法");
+    return;
+  }
+  if (!/^[1-9]\d*$/.test(threadCountValue)) {
+    showError("线程数必须是一个正整数");
+    return;
+  }
+  const threadCountInt = parseInt(threadCountValue, 10);
+
+
   clearError();
   resetTask();
   startLoading();
@@ -82,7 +98,7 @@ async function handleDownload() {
     await startTask({
       url: url.value,
       savePath: savePath.value + "/" + filename.value,
-      threadCount: parseInt(threadCount.value, 10),
+      threadCount: threadCountInt,
     });
 
     if (taskError.value) showError(taskError.value);

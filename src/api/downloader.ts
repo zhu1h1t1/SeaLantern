@@ -30,7 +30,7 @@ export const downloadApi = {
     return tauriInvoke<string>("download_file", {
       url: options.url,
       savePath: options.savePath,
-      threadCount: options.threadCount || 8,
+      threadCount: options.threadCount || 32,
     });
   },
 
