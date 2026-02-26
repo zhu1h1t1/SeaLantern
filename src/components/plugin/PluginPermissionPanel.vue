@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { computed } from "vue";
 import { usePluginStore } from "@stores/pluginStore";
 import { i18n } from "@language";
 import { getPermissionMetadata } from "@type/plugin";
-import { Lock, X } from "lucide-vue-next";
+import { Lock } from "lucide-vue-next";
+import {
+  DropdownMenuRoot,
+  DropdownMenuTrigger,
+  DropdownMenuPortal,
+  DropdownMenuContent,
+  DropdownMenuArrow,
+} from "reka-ui";
 
 interface Props {
   pluginId: string;
@@ -12,9 +19,6 @@ interface Props {
 
 const props = defineProps<Props>();
 const pluginStore = usePluginStore();
-
-const isOpen = ref(false);
-const panelPosition = ref({ top: 0, left: 0, maxHeight: 400 });
 
 function getPermissionLabel(permission: string): string {
   const meta = getPermissionMetadata(permission);
@@ -46,7 +50,7 @@ const apiStats = computed(() => {
     });
   return Array.from(stats.entries())
     .map(([name, count]) => ({ name, count }))
-    .toSorted((a, b) => b.count - a.count);
+    .toSorted((a: { count: number }, b: { count: number }) => b.count - a.count);
 });
 
 function formatTime(timestamp: number): string {
@@ -57,132 +61,29 @@ function formatTime(timestamp: number): string {
     second: "2-digit",
   });
 }
-
-function updatePanelPosition() {
-  if (!buttonRef.value) {
-    console.warn('Button ref not found');
-    return;
-  }
-  
-  const rect = buttonRef.value.getBoundingClientRect();
-  const panelWidth = 320;
-  const panelHeight = 400;
-  const minHeight = 200;
-  const padding = 8;
-
-  // 计算可用空间
-  const spaceBelow = window.innerHeight - rect.bottom - padding;
-  const spaceAbove = rect.top - padding;
-  const spaceRight = window.innerWidth - rect.right - padding;
-
-  // 确定面板位置
-  let top: number;
-  let left: number;
-  let actualMaxHeight = panelHeight;
-
-  // 优先在下方显示
-  if (spaceBelow >= panelHeight) {
-    top = rect.bottom + 4;
-  } else if (spaceAbove >= panelHeight) {
-    top = rect.top - panelHeight - 4;
-  } else {
-    // 空间不足，选择空间较大的方向并调整高度
-    if (spaceBelow >= spaceAbove) {
-      top = rect.bottom + 4;
-      actualMaxHeight = Math.max(minHeight, spaceBelow - 4);
-    } else {
-      top = padding;
-      actualMaxHeight = Math.max(minHeight, spaceAbove - 4);
-    }
-  }
-
-  // 优先在右侧显示（如果空间足够）
-  if (spaceRight >= panelWidth) {
-    left = rect.right + 4;
-  } else {
-    // 右侧空间不足，显示在左侧
-    left = Math.max(padding, rect.left - panelWidth - 4);
-  }
-
-  panelPosition.value = { top, left, maxHeight: actualMaxHeight };
-}
-
-async function togglePanel() {
-  isOpen.value = !isOpen.value;
-  if (isOpen.value) {
-    await nextTick();
-    updatePanelPosition();
-  }
-}
-
-function closePanel() {
-  isOpen.value = false;
-}
-
-const panelRef = ref<HTMLElement | null>(null);
-const buttonRef = ref<HTMLElement | null>(null);
-
-function handleClickOutside(event: MouseEvent) {
-  if (!isOpen.value) return;
-  const target = event.target as Node;
-  if (
-    panelRef.value &&
-    !panelRef.value.contains(target) &&
-    buttonRef.value &&
-    !buttonRef.value.contains(target)
-  ) {
-    closePanel();
-  }
-}
-
-function handleScroll() {
-  if (isOpen.value) {
-    updatePanelPosition();
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-  window.addEventListener("scroll", handleScroll, true);
-  window.addEventListener("resize", handleScroll);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-  window.removeEventListener("scroll", handleScroll, true);
-  window.removeEventListener("resize", handleScroll);
-});
 </script>
 
 <template>
-  <div class="permission-panel-wrapper" :class="{ 'permission-panel-wrapper--open': isOpen }">
-    <button
-      ref="buttonRef"
+  <DropdownMenuRoot>
+    <DropdownMenuTrigger
       class="permission-btn"
-      :class="{ 'permission-btn--active': isOpen }"
-      @click.stop="togglePanel"
       :title="i18n.t('plugins.permission.panel_btn_title')"
     >
       <Lock :size="14" :stroke-width="2" />
       <span class="permission-btn-text">{{ i18n.t("plugins.permission.panel_btn_text") }}</span>
-    </button>
+    </DropdownMenuTrigger>
 
-    <Teleport to="body">
-      <div
-        v-if="isOpen"
-        ref="panelRef"
-        class="permission-panel glass"
-        :style="{
-          top: `${panelPosition.top}px`,
-          left: `${panelPosition.left}px`,
-          maxHeight: `${panelPosition.maxHeight}px`,
-        }"
+    <DropdownMenuPortal>
+      <DropdownMenuContent
+        class="permission-panel"
+        :side-offset="4"
+        positionStrategy="fixed"
+        :collision-padding="8"
       >
+        <DropdownMenuArrow class="panel-arrow" />
+
         <div class="panel-header">
           <span class="panel-title">{{ i18n.t("plugins.permission.panel_title") }}</span>
-          <button class="panel-close" @click="closePanel">
-            <X :size="14" :stroke-width="2" />
-          </button>
         </div>
 
         <div class="panel-content">
@@ -234,22 +135,12 @@ onUnmounted(() => {
             </div>
           </div>
         </div>
-      </div>
-    </Teleport>
-  </div>
+      </DropdownMenuContent>
+    </DropdownMenuPortal>
+  </DropdownMenuRoot>
 </template>
 
 <style scoped>
-.permission-panel-wrapper {
-  position: relative;
-  display: inline-flex;
-  z-index: 1;
-}
-
-.permission-panel-wrapper--open {
-  z-index: 9999;
-}
-
 .permission-btn {
   display: inline-flex;
   align-items: center;
@@ -269,7 +160,7 @@ onUnmounted(() => {
   color: var(--sl-text-primary);
 }
 
-.permission-btn--active {
+.permission-btn[data-state="open"] {
   background: var(--sl-primary);
   color: white;
 }
@@ -278,25 +169,23 @@ onUnmounted(() => {
   font-weight: 500;
 }
 
-.permission-panel {
-  position: fixed;
+:deep(.permission-panel) {
   width: 320px;
   max-height: 400px;
   border-radius: var(--sl-radius-lg);
   border: 1px solid var(--sl-glass-border, rgba(255, 255, 255, 0.5));
   box-shadow: var(--sl-shadow-lg);
-  z-index: 9999;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  backdrop-filter: blur(var(--sl-blur-lg, 20px)) saturate(var(--sl-saturate-normal, 180%));
-  -webkit-backdrop-filter: blur(var(--sl-blur-lg, 20px)) saturate(var(--sl-saturate-normal, 180%));
-  will-change: backdrop-filter;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  z-index: 9999999;
 }
 
-.panel-header {
+:deep(.panel-arrow) {
+  fill: var(--sl-surface);
+}
+
+:deep(.panel-header) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -305,47 +194,28 @@ onUnmounted(() => {
   background: var(--sl-bg-tertiary);
 }
 
-.panel-title {
-  font-size: var(--sl-font-size-base);
+:deep(.panel-title) {
+  font-size: 14px;
   font-weight: 600;
   color: var(--sl-text-primary);
 }
 
-.panel-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: var(--sl-radius-xs);
-  background: transparent;
-  color: var(--sl-text-tertiary);
-  cursor: pointer;
-  transition: all var(--sl-transition-fast);
-}
-
-.panel-close:hover {
-  background: var(--sl-bg-hover);
-  color: var(--sl-text-primary);
-}
-
-.panel-content {
+:deep(.panel-content) {
   flex: 1;
   overflow-y: auto;
   padding: 12px 16px;
 }
 
-.panel-section {
+:deep(.panel-section) {
   margin-bottom: 16px;
 }
 
-.panel-section:last-child {
+:deep(.panel-section:last-child) {
   margin-bottom: 0;
 }
 
-.section-title {
-  font-size: var(--sl-font-size-xs);
+:deep(.section-title) {
+  font-size: 12px;
   font-weight: 600;
   color: var(--sl-text-secondary);
   margin-bottom: 8px;
@@ -353,13 +223,13 @@ onUnmounted(() => {
   letter-spacing: 0.5px;
 }
 
-.permission-tags {
+:deep(.permission-tags) {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.permission-tag {
+:deep(.permission-tag) {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -372,7 +242,7 @@ onUnmounted(() => {
   cursor: default;
 }
 
-.permission-tag-tooltip {
+:deep(.permission-tag-tooltip) {
   display: none;
   position: absolute;
   top: calc(100% + 6px);
@@ -394,16 +264,16 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
-.permission-tag:hover .permission-tag-tooltip {
+:deep(.permission-tag:hover .permission-tag-tooltip) {
   display: block;
 }
 
-.command-list {
+:deep(.command-list) {
   max-height: 120px;
   overflow-y: auto;
 }
 
-.command-item {
+:deep(.command-item) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -413,11 +283,11 @@ onUnmounted(() => {
   margin-bottom: 4px;
 }
 
-.command-item:last-child {
+:deep(.command-item:last-child) {
   margin-bottom: 0;
 }
 
-.command-action {
+:deep(.command-action) {
   flex: 1;
   font-size: var(--sl-font-size-xs);
   color: var(--sl-text-primary);
@@ -428,18 +298,18 @@ onUnmounted(() => {
   margin-right: 8px;
 }
 
-.command-time {
-  font-size: var(--sl-font-size-xs);
+:deep(.command-time) {
+  font-size: 11px;
   color: var(--sl-text-tertiary);
   flex-shrink: 0;
 }
 
-.api-stats {
+:deep(.api-stats) {
   max-height: 100px;
   overflow-y: auto;
 }
 
-.api-stat-item {
+:deep(.api-stat-item) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -449,57 +319,50 @@ onUnmounted(() => {
   margin-bottom: 4px;
 }
 
-.api-stat-item:last-child {
+:deep(.api-stat-item:last-child) {
   margin-bottom: 0;
 }
 
-.api-name {
-  font-size: var(--sl-font-size-xs);
+:deep(.api-name) {
+  font-size: 12px;
   color: var(--sl-text-primary);
   font-family: monospace;
 }
 
-.api-count {
-  font-size: var(--sl-font-size-xs);
+:deep(.api-count) {
+  font-size: 11px;
   color: var(--sl-text-secondary);
   font-weight: 500;
 }
 
-.empty-hint {
-  font-size: var(--sl-font-size-xs);
+:deep(.empty-hint) {
+  font-size: 12px;
   color: var(--sl-text-tertiary);
   font-style: italic;
 }
 
-.panel-fade-enter-active,
-.panel-fade-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+:deep(.panel-content::-webkit-scrollbar),
+:deep(.command-list::-webkit-scrollbar),
+:deep(.api-stats::-webkit-scrollbar) {
+  width: 4px;
 }
 
-.panel-fade-enter-from,
-.panel-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-8px);
-}
-</style>
-
-<style>
-/* 非 scoped 样式，用于响应全局 data 属性 */
-[data-theme="dark"] .permission-panel {
-  --sl-glass-border: rgba(255, 255, 255, 0.08);
+:deep(.panel-content::-webkit-scrollbar-track),
+:deep(.command-list::-webkit-scrollbar-track),
+:deep(.api-stats::-webkit-scrollbar-track) {
+  background: transparent;
 }
 
-[data-acrylic="true"] .permission-panel {
-  backdrop-filter: blur(var(--sl-blur-xl, 32px)) saturate(var(--sl-saturate-normal, 180%));
-  -webkit-backdrop-filter: blur(var(--sl-blur-xl, 32px)) saturate(var(--sl-saturate-normal, 180%));
+:deep(.panel-content::-webkit-scrollbar-thumb),
+:deep(.command-list::-webkit-scrollbar-thumb),
+:deep(.api-stats::-webkit-scrollbar-thumb) {
+  background: var(--sl-border);
+  border-radius: 2px;
 }
 
-[data-acrylic="false"] .permission-panel {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  will-change: auto;
-  background: var(--sl-surface);
+:deep(.panel-content::-webkit-scrollbar-thumb:hover),
+:deep(.command-list::-webkit-scrollbar-thumb:hover),
+:deep(.api-stats::-webkit-scrollbar-thumb:hover) {
+  background: var(--sl-text-tertiary);
 }
 </style>
